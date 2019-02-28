@@ -1,0 +1,42 @@
+﻿<Application x:Class="SpriteSheetHelper.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SpriteSheetHelper"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <local:MainController x:Key="MainController" />
+
+        <SolidColorBrush x:Key="MainBackgroundColor">#101010</SolidColorBrush>
+        <SolidColorBrush x:Key="MainForegroundColor">#C8C8C8</SolidColorBrush>
+
+        <SolidColorBrush x:Key="MenuBackgroundColor">#343434</SolidColorBrush>
+        <SolidColorBrush x:Key="MenuForegroundColor">#C8C8C8</SolidColorBrush>
+
+        <SolidColorBrush x:Key="MenuItemBackgroundColor">#343434</SolidColorBrush>
+        <SolidColorBrush x:Key="MenuItemForegroundColor">#C8C8C8</SolidColorBrush>
+
+        <SolidColorBrush x:Key="SubMenuItemBackgroundColor">#EDEDED</SolidColorBrush>
+        <SolidColorBrush x:Key="SubMenuItemForegroundColor">#000000</SolidColorBrush>
+
+        <SolidColorBrush x:Key="WorkspaceBackgroundColor">#191919</SolidColorBrush>
+
+        <Style TargetType="{x:Type Menu}">
+            <Setter Property="Background" Value="{Binding Source={StaticResource MenuBackgroundColor}}"/>
+        </Style>
+
+        <Style x:Key="SubMenuItemStyle" TargetType="{x:Type MenuItem}">
+            <Setter Property="Foreground" Value="{Binding Source={StaticResource SubMenuItemForegroundColor}}"/>
+        </Style>
+
+        <Style TargetType="{x:Type Label}">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="Foreground" Value="{Binding Source={StaticResource MainForegroundColor}}"/>
+        </Style>
+
+        <Style x:Key="MenuItemStyle" TargetType="{x:Type MenuItem}">
+            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Foreground" Value="{Binding Source={StaticResource MenuItemForegroundColor}}"/>
+        </Style>
+    </Application.Resources>
+</Application>

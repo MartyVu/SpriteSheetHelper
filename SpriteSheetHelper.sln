@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2024
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpriteSheetHelper", "SpriteSheetHelper\SpriteSheetHelper.csproj", "{12C54EBC-3339-45B1-8970-D8C121645B1E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12C54EBC-3339-45B1-8970-D8C121645B1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12C54EBC-3339-45B1-8970-D8C121645B1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12C54EBC-3339-45B1-8970-D8C121645B1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12C54EBC-3339-45B1-8970-D8C121645B1E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7F83FBFF-1290-43FD-B906-A16809234D6F}
+	EndGlobalSection
+EndGlobal
