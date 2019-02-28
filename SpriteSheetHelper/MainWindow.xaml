@@ -6,9 +6,13 @@
         xmlns:local="clr-namespace:SpriteSheetHelper"
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280" Background="{Binding Source={StaticResource MainBackgroundColor}}"
-        DataContext="{StaticResource MainController}">
+        DataContext="{StaticResource MainController}" Loaded="Window_Loaded" SizeChanged="Window_SizeChanged"
+        PreviewMouseMove="Window_PreviewMouseMove" PreviewMouseDown="Window_PreviewMouseDown" PreviewMouseUp="Window_PreviewMouseUp"
+        PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
     <Window.CommandBindings>
-        <CommandBinding Executed="NewCommand_Executed" CanExecute="NewCommand_CanExecute" />
+        <CommandBinding Command="local:Commands.OpenFile" Executed="OpenFile"/>
+        <CommandBinding Command="local:Commands.CloseFile" Executed="CloseFile" CanExecute="CanCloseFile"/>
+        <CommandBinding Command="local:Commands.Exit" Executed="Exit"/>
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -17,10 +21,14 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0">
             <MenuItem Header="File" Style="{StaticResource MenuItemStyle}">
-                <MenuItem Header="Open" Style="{StaticResource SubMenuItemStyle}"/>
-                <MenuItem Header="Save" Style="{StaticResource SubMenuItemStyle}"/>
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.OpenFile"/>
                 <MenuItem Header="Import Image" Style="{StaticResource SubMenuItemStyle}"/>
-                <MenuItem Header="Close" Style="{StaticResource SubMenuItemStyle}"/>
+                <Separator />
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.CloseFile"/>
+                <MenuItem Header="Save" Style="{StaticResource SubMenuItemStyle}"/>
+                <MenuItem Header="Save As" Style="{StaticResource SubMenuItemStyle}"/>
+                <Separator />
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.Exit"/>
             </MenuItem>
             <MenuItem Header="Edit" Style="{StaticResource MenuItemStyle}">
                 <MenuItem Header="Copy" Style="{StaticResource SubMenuItemStyle}"/>
@@ -34,6 +42,138 @@
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Width="200" Margin="5">
+                    <StackPanel>
+                        <Label>
+                            <TextBlock Text="{Binding ScaledMousePositionOnImage.X, StringFormat=Scaled Mouse Image X: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding ScaledMousePositionOnImage.Y, StringFormat=Scaled Mouse Image Y: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding MousePositionOnImage.X, StringFormat=Mouse Image X: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding MousePositionOnImage.Y, StringFormat=Mouse Image Y: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding ViewportCenterOnImage.X, StringFormat=Viewport Center Image X: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding ViewportCenterOnImage.Y, StringFormat=Viewport Center Image Y: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding MousePositionOnViewport.X, StringFormat=Mouse View Port X: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding MousePositionOnViewport.Y, StringFormat=Mouse View Port Y: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding ImagePosition.X, StringFormat=Image Position X: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding ImagePosition.Y, StringFormat=Image Position Y: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding ImageSource.Width, StringFormat=Image Original Width: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding ImageSource.Height, StringFormat=Image Original Height: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding Path=ImageSize.Width, StringFormat=Image Width: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding Path=ImageSize.Height, StringFormat=Image Height: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding Path=CanvasSize.Width, StringFormat=Canvas Width: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding Path=CanvasSize.Height, StringFormat=Canvas Height: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding Path=ViewportSize.Width, StringFormat=View Port Width: {0:N0}}"/>
+                        </Label>
+                        <Label>
+                            <TextBlock Text="{Binding Path=ViewportSize.Height, StringFormat=View Port Height: {0:N0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding ScaleText, StringFormat=Zoom: {0:N0}%}"/>
+                        </Label>
+                        <Slider Minimum="0" Maximum="14" Value="{Binding ScaleIndex, Mode=TwoWay}" IsSnapToTickEnabled="True" TickFrequency="1" ValueChanged="Slider_ValueChanged"/>
+                        <Label>
+                            <TextBlock Text="{Binding ActiveModifier, StringFormat=Active Modifier: {0}}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>                            
+                            <TextBox Text="{Binding FrameWidth, StringFormat=0;N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Label>
+                        <Label>
+                            <TextBox Text="{Binding FrameHeight, StringFormat=0;N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Label>
+                    </StackPanel>
+                </Grid>
+                <ScrollViewer x:Name="ScrollViewer" Grid.Column="1" Focusable="False" Margin="5"
+                          HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"                           
+                          PreviewMouseWheel="ScrollViewer_PreviewMouseWheel" ScrollChanged="ScrollViewer_ScrollChanged"
+                          local:ScrollViewerObserver.ObserveScrollViewer="True" 
+                          local:ScrollViewerObserver.ViewportSize="{Binding ViewportSize, Mode=OneWayToSource}"
+                          local:ScrollViewerObserver.ScrollableSize="{Binding ScrollableSize, Mode=OneWayToSource}"
+                          local:ScrollViewerObserver.HorizontalOffset="{Binding HorizontalOffset, Mode=TwoWay}" 
+                          local:ScrollViewerObserver.VerticalOffset="{Binding VerticalOffset, Mode=TwoWay}">
+                    <Canvas x:Name="Canvas" Background="{StaticResource WorkspaceBackgroundColor}"
+                            MinWidth="{Binding ViewportWidth}" MinHeight="{Binding ViewportHeight}"
+                            Width="{Binding CanvasSize.Width}" Height="{Binding CanvasSize.Height}">
+                        <Rectangle Fill="White" Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
+                                   Canvas.Left="{Binding ImagePosition.X}" Canvas.Top="{Binding ImagePosition.Y}"/>
+                        <Image x:Name="Image" Source="{Binding ImageSource}" RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
+                               Canvas.Left="{Binding ImagePosition.X}" Canvas.Top="{Binding ImagePosition.Y}" MouseDown="Image_MouseDown"/>
+                        <ItemsControl ItemsSource="{Binding Frames}"
+                                      Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
+                                      Canvas.Left="{Binding Path=ImagePosition.X}" Canvas.Top="{Binding Path=ImagePosition.Y}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas >
+                                        <Canvas.LayoutTransform>
+                                            <ScaleTransform ScaleX="{Binding ScaleValue}" ScaleY="{Binding ScaleValue}"/>
+                                        </Canvas.LayoutTransform>
+                                    </Canvas>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Rectangle Width="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Width}" Height="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Height}" Fill="LightBlue" Stroke="DarkBlue" Opacity="0.5" IsHitTestVisible="False" StrokeDashOffset="5" StrokeDashArray="5" StrokeDashCap="Triangle">
+                                        <Rectangle.RenderTransform>
+                                            <TranslateTransform X="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameCenter.X}" Y="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameCenter.Y}" />
+                                        </Rectangle.RenderTransform>
+                                    </Rectangle>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Canvas>
+                </ScrollViewer>
+            </Grid>
             <GridSplitter Grid.Column="1" Background="Black" Foreground="Black"/>
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
