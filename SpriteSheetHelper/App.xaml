@@ -6,6 +6,18 @@
     <Application.Resources>
         <local:MainController x:Key="MainController" />
 
+        <local:DifferenceConverter x:Key="DifferenceConverter"/>
+        <local:SumConverter x:Key="SumConverter"/>
+        <local:MinValueConverter x:Key="MinValueConverter"/>
+        <local:IconConverter x:Key="IconConverter"/>
+        <local:ThumbnailConverter x:Key="ThumbnailConverter"/>
+        <local:IsEnabledConverter x:Key="IsEnabledConverted"/>
+
+        <BitmapImage x:Key="MouseToolIcon" UriSource="Resources\MouseTool.png"/>
+        <BitmapImage x:Key="FrameToolIcon" UriSource="Resources\FrameTool.png"/>
+        <BitmapImage x:Key="ZoomToolIcon" UriSource="Resources\ZoomTool.png"/>
+        <BitmapImage x:Key="PanToolIcon" UriSource="Resources\PanTool.png"/>
+
         <SolidColorBrush x:Key="MainBackgroundColor">#101010</SolidColorBrush>
         <SolidColorBrush x:Key="MainForegroundColor">#C8C8C8</SolidColorBrush>
 
@@ -18,25 +30,51 @@
         <SolidColorBrush x:Key="SubMenuItemBackgroundColor">#EDEDED</SolidColorBrush>
         <SolidColorBrush x:Key="SubMenuItemForegroundColor">#000000</SolidColorBrush>
 
+        <SolidColorBrush x:Key="ListBoxBackgroundColor">#2B2B2B</SolidColorBrush>
+        <SolidColorBrush x:Key="ListBoxForegroundColor">#787878</SolidColorBrush>
+
+
         <SolidColorBrush x:Key="WorkspaceBackgroundColor">#191919</SolidColorBrush>
 
         <Style TargetType="{x:Type Menu}">
-            <Setter Property="Background" Value="{Binding Source={StaticResource MenuBackgroundColor}}"/>
+            <Setter Property="Background" Value="{StaticResource MenuBackgroundColor}"/>
         </Style>
 
         <Style x:Key="SubMenuItemStyle" TargetType="{x:Type MenuItem}">
-            <Setter Property="Foreground" Value="{Binding Source={StaticResource SubMenuItemForegroundColor}}"/>
+            <Setter Property="Foreground" Value="{StaticResource SubMenuItemForegroundColor}"/>
         </Style>
 
         <Style TargetType="{x:Type Label}">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="VerticalAlignment" Value="Bottom"/>
-            <Setter Property="Foreground" Value="{Binding Source={StaticResource MainForegroundColor}}"/>
+            <Setter Property="Foreground" Value="{StaticResource MainForegroundColor}"/>
         </Style>
 
         <Style x:Key="MenuItemStyle" TargetType="{x:Type MenuItem}">
             <Setter Property="Margin" Value="0,5"/>
-            <Setter Property="Foreground" Value="{Binding Source={StaticResource MenuItemForegroundColor}}"/>
+            <Setter Property="Foreground" Value="{StaticResource MenuItemForegroundColor}"/>
         </Style>
+
+        <Style TargetType="{x:Type ListBox}">
+            <Setter Property="Background" Value="{StaticResource ListBoxBackgroundColor}"/>
+            <Setter Property="Foreground" Value="{StaticResource ListBoxForegroundColor}"/>
+        </Style>
+
+        <RoutedUICommand x:Key="OpenFile" Text="Open File"/>
+        <RoutedUICommand x:Key="CloseFile" Text="Close File"/>
+        <RoutedUICommand x:Key="Exit" Text="Exit"/>
+
+        <RoutedUICommand x:Key="AddAnimation" Text="Add Animation"/>
+        <RoutedUICommand x:Key="RemoveAnimation" Text="Remove Animation"/>
+        <RoutedUICommand x:Key="EditAnimation" Text="Edit Animation"/>
+
+        <RoutedUICommand x:Key="AddFrame" Text="Add Frame"/>
+        <RoutedUICommand x:Key="RemoveFrame" Text="Remove Frame"/>
+
+        <RoutedUICommand x:Key="SelectFirstFrame" Text="Select First Frame"/>
+        <RoutedUICommand x:Key="SelectPreviousFrame" Text="Select Previous Frame"/>
+        <RoutedUICommand x:Key="SelectNextFrame" Text="Select Next Frame"/>
+        <RoutedUICommand x:Key="SelectLastFrame" Text="Select Last Frame"/>
+        <RoutedUICommand x:Key="PlayAnimation" Text="Play Animation"/>
     </Application.Resources>
 </Application>

@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -18,74 +19,80 @@ namespace SpriteSheetHelper
 {
     public partial class MainWindow : Window
     {
-        private MainController Controller { get; }
+        private MainController MainController { get; }
 
         public MainWindow()
         {
             InitializeComponent();
-            Controller = (MainController)Application.Current.Resources["MainController"];
+            MainController = (MainController)Application.Current.Resources["MainController"];
         }        
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Controller.OpenFile(@"E:\Marty V\Pictures\CU_logo_black.png");
-            Controller.Loaded = true;
+            MainController.OpenFile(@"E:\Marty V\Pictures\CU_logo_black.png");
+            MainController.Loaded = true;
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (e.PreviousSize == new Size())
                 return;
 
-            Controller.PrevScrollOffset = Controller.ScrollOffset;
-            Controller.PrevScrollableSize = Controller.ScrollableSize;
+            MainController.PrevScrollOffset = MainController.ScrollOffset;
+            MainController.PrevScrollableSize = MainController.ScrollableSize;
 
-            Controller.SizeChanged = true;
+            MainController.SizeChanged = true;
         }
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (Controller.ActiveModifier == MainController.ModKeys.Panning)
+            if (MainController.ActiveModifier == MainController.ModKeys.Panning)
                 return;
 
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) > 0)
+                MainController.AddModifier(MainController.ModKeys.ShiftHeld);
+
             if ((Keyboard.Modifiers & ModifierKeys.Control) > 0)
-                Controller.AddModifier(MainController.ModKeys.CanZoom);
+                MainController.AddModifier(MainController.ModKeys.CtrlHeld);
 
             if (e.Key == Key.Space)
-                Controller.AddModifier(MainController.ModKeys.CanPan);
+                MainController.AddModifier(MainController.ModKeys.SpaceHeld);
         }
         private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
         {
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) <= 0)
+                MainController.RemoveModifier(MainController.ModKeys.ShiftHeld);
+
             if ((Keyboard.Modifiers & ModifierKeys.Control) <= 0)
-                Controller.RemoveModifier(MainController.ModKeys.CanZoom);
+                MainController.RemoveModifier(MainController.ModKeys.CtrlHeld);
 
             if (e.Key == Key.Space)
-                Controller.RemoveModifier(MainController.ModKeys.CanPan);
+                MainController.RemoveModifier(MainController.ModKeys.SpaceHeld);
         }
         private void Window_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            Controller.MousePositionOnImage = Mouse.GetPosition(Image);
-            Controller.MousePositionOnCanvas = Mouse.GetPosition(Canvas);
-            Controller.MousePositionOnViewport = Mouse.GetPosition(ScrollViewer);
+            MainController.MousePositionOnImage = Mouse.GetPosition(Image);
+            MainController.MousePositionOnCanvas = Mouse.GetPosition(Canvas);
+            MainController.MousePositionOnViewport = Mouse.GetPosition(ScrollViewer);
 
-            if (Controller.ActiveModifier == MainController.ModKeys.Panning)
+            if (MainController.ActiveModifier == MainController.ModKeys.Panning)
             {
-                Point mouseDelta = (Point)(Controller.MousePositionOnViewport - Controller.PrevMousePositionViewport);
+                Point mouseDelta = (Point)(MainController.MousePositionOnViewport - MainController.PrevMousePositionViewport);
 
-                Controller.ScrollOffset = new Point(Controller.PrevScrollOffset.X - mouseDelta.X, Controller.PrevScrollOffset.Y - mouseDelta.Y);
+                MainController.ScrollOffset = new Point(MainController.PrevScrollOffset.X - mouseDelta.X, MainController.PrevScrollOffset.Y - mouseDelta.Y);
             }
         }
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (Controller.ActiveModifier == MainController.ModKeys.CanPan)
+            if (MainController.ActiveModifier == MainController.ModKeys.SpaceHeld)
             {
-                if (Controller.MousePositionOnViewport.X >= 0.0 && Controller.MousePositionOnViewport.X <= Controller.ViewportSize.Width && Controller.MousePositionOnViewport.Y >= 0.0 && Controller.MousePositionOnViewport.Y <= Controller.ViewportSize.Height)
+                if (MainController.MousePositionOnViewport.X >= 0.0 && MainController.MousePositionOnViewport.X <= MainController.ViewportSize.Width && MainController.MousePositionOnViewport.Y >= 0.0 && MainController.MousePositionOnViewport.Y <= MainController.ViewportSize.Height)
                 {
                     if (e.LeftButton == MouseButtonState.Pressed)
                     {
-                        if (Controller.ActiveModifier != MainController.ModKeys.Panning)
+                        if (MainController.ActiveModifier != MainController.ModKeys.Panning)
                         {
-                            Controller.AddModifier(MainController.ModKeys.Panning);
-                            Controller.PrevMousePositionViewport = Controller.MousePositionOnViewport;
-                            Controller.PrevScrollOffset = Controller.ScrollOffset;
+                            MainController.AddModifier(MainController.ModKeys.Panning);
+                            MainController.PrevMousePositionViewport = MainController.MousePositionOnViewport;
+                            MainController.PrevScrollOffset = MainController.ScrollOffset;
                             CaptureMouse();
                         }
                     }
@@ -96,9 +103,9 @@ namespace SpriteSheetHelper
         {
             if (e.LeftButton == MouseButtonState.Released)
             {
-                if (Controller.ActiveModifier == MainController.ModKeys.Panning)
+                if (MainController.ActiveModifier == MainController.ModKeys.Panning)
                 {
-                    Controller.RemoveModifier(MainController.ModKeys.Panning);
+                    MainController.RemoveModifier(MainController.ModKeys.Panning);
                     ReleaseMouseCapture();
                 }
             }
@@ -106,55 +113,187 @@ namespace SpriteSheetHelper
 
         private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            Controller.MousePositionOnImage = Mouse.GetPosition(Image);
+            MainController.MousePositionOnImage = Mouse.GetPosition(Image);
         }
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (Controller.ActiveModifier == MainController.ModKeys.CanZoom)
+            if (MainController.ActiveModifier == MainController.ModKeys.CtrlHeld)
             {
-                if (Controller.MousePositionOnViewport.X >= 0.0 && Controller.MousePositionOnViewport.X <= Controller.ViewportSize.Width && Controller.MousePositionOnViewport.Y >= 0.0 && Controller.MousePositionOnViewport.Y <= Controller.ViewportSize.Height)
+                if (MainController.MousePositionOnViewport.X >= 0.0 && MainController.MousePositionOnViewport.X <= MainController.ViewportSize.Width && MainController.MousePositionOnViewport.Y >= 0.0 && MainController.MousePositionOnViewport.Y <= MainController.ViewportSize.Height)
                 {
-                    if (Controller.ImageSource != null)
-                        Controller.Scroll(e.Delta);
+                    if (MainController.ImageSource != null)
+                        MainController.Scroll(e.Delta);
 
                     e.Handled = true;
                 }
             }
         }
 
+       
+
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (MainController == null)
+                return;
+
+            if (!MainController.Loaded)
+                return;
+
+            MainController.SliderChanged = true;
+        }
+
+        
+
+        private void Animations_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            FramesSuperset.SelectionChanged -= FramesSuperset_SelectionChanged;
+
+            foreach (var frame in MainController.FramesSuperset)
+                frame.IsSelected = false;
+
+            MainController.SelectedAnimationCount = Animations.SelectedItems.Count;
+
+            if (MainController.SelectedAnimationCount == 1 && MainController.SelectedAnimation.Frames.Any())
+                MainController.SelectedAnimation.Frames.First().IsSelected = true;
+
+            FramesSuperset.SelectionChanged += FramesSuperset_SelectionChanged;
+        }
+
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (Controller.ActiveModifier == MainController.ModKeys.Panning || Controller.ActiveModifier == MainController.ModKeys.CanZoom)
+            if (MainController.ActiveModifier == MainController.ModKeys.Panning || MainController.ActiveModifier == MainController.ModKeys.CtrlHeld)
                 return;
 
             if (e.LeftButton != MouseButtonState.Pressed)
                 return;
 
-            //Controller.AddFrame(Controller.ScaledMousePositionOnImage);
+            if (MainController.ActiveModifier != MainController.ModKeys.ShiftHeld)
+                return;
+
+            MainController.AddFrame(MainController.ScaledMousePositionOnImage);
         }
 
-        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void FramesSuperset_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (Controller == null)
+            if (FramesSuperset.SelectedItems.Count == 0)
                 return;
 
-            if (!Controller.Loaded)
-                return;
+            Animations.SelectionChanged -= Animations_SelectionChanged;
 
-            Controller.SliderChanged = true;
+            MainController.SelectedFrameCount = FramesSuperset.SelectedItems.Count;
+
+            foreach (var animation in MainController.Animations)
+                animation.IsSelected = animation.Frames.Any(x => FramesSuperset.SelectedItems.Contains(x));
+
+            MainController.SelectedAnimationCount = Animations.SelectedItems.Count;
+
+            Animations.SelectionChanged += Animations_SelectionChanged;
         }
 
-        private void OpenFile(object sender, ExecutedRoutedEventArgs e)
+        private void OpenFile_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             var openDialog = new OpenFileDialog { Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png" };
             if (!openDialog.ShowDialog(this).Value)
                 return;
 
-            if (!Controller.OpenFile(openDialog.FileName))
+            if (!MainController.OpenFile(openDialog.FileName))
                 MessageBox.Show("Cannot read image file: " + Environment.NewLine + openDialog.FileName);
         }
-        private void CanCloseFile(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = Controller.ImageSource != null;
-        private void CloseFile(object sender, ExecutedRoutedEventArgs e) => Controller.CloseFile();
-        private void Exit(object sender, ExecutedRoutedEventArgs e) => Close();
+        private void CloseFile_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.CloseFile();
+        private void CloseFile_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            e.CanExecute = MainController.ImageSource != null;
+        }
+        private void Exit_Exexcuted(object sender, ExecutedRoutedEventArgs e) => Close();
+
+        private void SelectFirstFrame_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.SelectFirstFrame();
+        private void SelectFirstFrame_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            if (MainController.SelectedFrame == null || MainController.AnimationFrames == null)
+                return;
+
+            e.CanExecute = MainController.SelectedFrame != MainController.AnimationFrames.First();
+        }
+        private void SelectPreviousFrame_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.SelectPreviousFrame();
+        private void SelectPreviousFrame_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            if (MainController.SelectedFrame == null || MainController.AnimationFrames == null)
+                return;
+
+            e.CanExecute = MainController.AnimationFrames.Count > 1;
+
+        }
+        private void SelectNextFrame_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.SelectNextFrame();
+        private void SelectNextFrame_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            if (MainController.SelectedFrame == null || MainController.AnimationFrames == null)
+                return;
+
+            e.CanExecute = MainController.AnimationFrames.Count > 1;
+
+        }
+        private void SelectLastFrame_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.SelectLastFrame();
+        private void SelectLastFrame_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            if (MainController.SelectedFrame == null || MainController.AnimationFrames == null)
+                return;
+
+            e.CanExecute = MainController.SelectedFrame != MainController.AnimationFrames.Last();
+
+        }
+        private void PlayAnimation_Executed(object sender, ExecutedRoutedEventArgs e) => MainController.PlayAnimation();
+        private void PlayAnimation_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            if (MainController.AnimationFrames == null)
+                return;
+
+            e.CanExecute = MainController.AnimationFrames.Count > 1;
+        }
+
+        private void AddAnimation_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            MainController.AddAnimation(MainController.Animations.Count.ToString());
+            Animations.Focus();
+        }
+        private void AddAnimation_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void RemoveAnimation_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            MainController.RemoveAnimations(Animations.SelectedItems.Cast<Animation>());
+            Animations.Focus();
+        }
+        private void RemoveAnimation_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (MainController == null)
+                return;
+
+            e.CanExecute = MainController.SelectedAnimationCount > 0;
+        }
+
+        private void EditAnimation_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
     }
 }

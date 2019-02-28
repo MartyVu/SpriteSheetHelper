@@ -54,8 +54,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Commands.cs" />
+    <Compile Include="ExtensionFunctions.cs" />
+    <Compile Include="Enumeration.cs" />
     <Compile Include="ScrollViewerBinding.cs" />
+    <Compile Include="ToolsType.cs" />
+    <Compile Include="ValueConverters.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -97,6 +100,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\FrameTool.png" />
+    <Resource Include="Resources\MouseTool.png" />
+    <Resource Include="Resources\PanTool.png" />
+    <Resource Include="Resources\ZoomTool.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

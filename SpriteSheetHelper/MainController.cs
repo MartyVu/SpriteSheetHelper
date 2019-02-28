@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace SpriteSheetHelper
 {
@@ -70,7 +72,7 @@ namespace SpriteSheetHelper
                 OnPropertyChanged(nameof(ViewportCenterOnImage));
             }
         }
-        public ImageSource ImageSource
+        public BitmapSource ImageSource
         {
             get
             {
@@ -87,7 +89,7 @@ namespace SpriteSheetHelper
                 }
             }
         }
-        public Size ImageSize { get => ImageSource == null ? new Size() : new Size(ImageSource.Width * ScaleValue, ImageSource.Height * ScaleValue); }
+        public Size ImageSize { get => ImageSource == null ? new Size() : new Size(ImageSource.PixelWidth * ScaleValue, ImageSource.PixelHeight * ScaleValue); }
         public Point ImageCenter { get => new Point(ImageSize.Width / 2.0, ImageSize.Height / 2.0); }
         public Vector ImagePosition { get => CanvasCenter - ImageCenter; } // Top, Left
         #endregion
@@ -358,22 +360,27 @@ namespace SpriteSheetHelper
             get => FrameSize.Height;
             set { FrameSize = new Size(FrameSize.Width, value); }
         }
-        public Point FrameCenter { get => new Point(-FrameSize.Width / 2.0, -FrameSize.Height / 2.0); }
+        public Point FrameCenter { get => new Point(FrameSize.Width / 2.0, FrameSize.Height / 2.0); }
         #endregion
 
-        public enum ModKeys { None, CanZoom, CanPan, Panning };
+        public enum ModKeys { None, CtrlHeld, ShiftHeld, SpaceHeld, Panning };
         private List<ModKeys> _modifiers;
         public ModKeys ActiveModifier { get => _modifiers.Any() ? _modifiers.Last() : ModKeys.None; }
 
-
-
-        private List<Animation> _animations;
-        public List<Animation> Animations
+        public ObservableCollection<Frame> FramesSuperset { get; private set; }
+        private Frame _selectedFrame;
+        public Frame SelectedFrame
         {
-            get => _animations;
-            private set { _animations = value; OnPropertyChanged(); }
+            get => _selectedFrame;
+            set
+            {
+                _selectedFrame = value;
+                OnPropertyChanged();
+                OnPropertyChanged("CurrentFrame");
+            }
         }
 
+        public ObservableCollection<Animation> Animations { get; private set; }
         private Animation _selectedAnimation;
         public Animation SelectedAnimation
         {
@@ -381,24 +388,86 @@ namespace SpriteSheetHelper
             set { _selectedAnimation = value; OnPropertyChanged(); }
         }
 
+        private int _selectedFrameCount;
+        public int SelectedFrameCount
+        {
+            get => _selectedFrameCount;
+            set
+            {
+                _selectedFrameCount = value;
+                OnPropertyChanged();
+                OnPropertyChanged("CurrentFrame");
+            }
+        }
 
+        public Frame CurrentFrame { get => SelectedFrameCount == 1 ? SelectedFrame : null; }
+
+        private bool _isPlaying;
+        public bool IsPlaying
+        {
+            get => _isPlaying;
+            set
+            {
+                _isPlaying = value;
+                OnPropertyChanged();
+
+                if (IsPlaying)
+                {
+                    PlaybackTimer.Interval = new TimeSpan(0, 0, 0, 0, SelectedFrame.DelayTime);
+                    PlaybackTimer.Start();
+                }
+                else                
+                    PlaybackTimer.Stop();                
+            }
+        }
+        private DispatcherTimer PlaybackTimer;
+
+
+        private int _selectedAnimationCount;
+        public int SelectedAnimationCount
+        {
+            get => _selectedAnimationCount;
+            set
+            {
+                _selectedAnimationCount = value;
+                OnPropertyChanged();
+                OnPropertyChanged("AnimationFrames");
+            }
+        }       
+        public ObservableCollection<Frame> AnimationFrames { get => SelectedAnimationCount == 1 ? SelectedAnimation?.Frames : null; }
+
+        private ToolsType _selectedTool;
+        public ToolsType SelectedTool
+        {
+            get => _selectedTool;
+            set
+            {
+                if (value == null)
+                {
+                    SelectedTool = _selectedTool;
+                    return;
+                }
+
+                _selectedTool = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public IEnumerable<ToolsType> Tools { get => Enumeration.GetAll<ToolsType>(); }
         public MainController()
         {
             FrameSize = new Size(100, 100);
             _modifiers = new List<ModKeys>();
 
-            Animations = new List<Animation>()
-            {
-                new Animation("Idle1"),
-                new Animation("Idle2"),
-                new Animation("Walk1a"),
-                new Animation("Walk1b"),
-                new Animation("Walk2a"),
-                new Animation("Walk2b")
-            };
+            FramesSuperset = new ObservableCollection<Frame>();
+            Animations = new ObservableCollection<Animation>();
 
+            SelectedTool = ToolsType.Mouse;
 
-        }
+            PlaybackTimer = new DispatcherTimer();
+            PlaybackTimer.Tick += PlaybackTimer_Tick;
+        }        
+
         public void AddModifier(ModKeys key)
         {
             if (_modifiers.Contains(key))
@@ -438,6 +507,80 @@ namespace SpriteSheetHelper
 
             MouseScrolled = PrevScaleValue != ScaleValue;
         }
+        public void AddAnimation(string name)
+        {
+            var newAnimation = new Animation(name);
 
+            Animations.Add(newAnimation);
+
+            SelectedAnimation = newAnimation;
+        }
+        public void RemoveAnimation(Animation animation) => RemoveAnimations(new Animation[] { animation });
+        public void RemoveAnimations(IEnumerable<Animation> animations)
+        {
+            var index = animations.Min(x => Animations.IndexOf(x));
+
+            foreach (var animation in animations.ToList())
+            {
+                foreach (var frame in animation.Frames)
+                    FramesSuperset.Remove(frame);
+
+                Animations.Remove(animation);
+            }
+
+            if (Animations.Any())
+                Animations[Math.Min(index, Animations.Count - 1)].IsSelected = true;
+        }
+        public void AddFrame(Point position)
+        {
+            if (SelectedAnimation == null)
+            {
+                SelectedAnimation = Animations.FirstOrDefault(x => x.Name == "Unassigned");
+                if (SelectedAnimation == null)
+                    AddAnimation("Unassigned");
+            }
+
+            var newFrame = new Frame(position);
+
+            FramesSuperset.Add(newFrame);
+            SelectedAnimation.Frames.Add(newFrame);
+
+            SelectedFrame = newFrame;
+        }
+
+        public void SelectFirstFrame()
+        {
+            SelectedFrame = AnimationFrames.First();
+        }
+        public void SelectPreviousFrame()
+        {
+            var currentIndex = AnimationFrames.IndexOf(SelectedFrame);
+
+            if (currentIndex == 0)
+                SelectLastFrame();
+            else
+                SelectedFrame = AnimationFrames[currentIndex - 1];
+        }
+        public void SelectNextFrame()
+        {
+            var currentIndex = AnimationFrames.IndexOf(SelectedFrame);
+
+            if (currentIndex == AnimationFrames.Count - 1)
+                SelectFirstFrame();
+            else
+                SelectedFrame = AnimationFrames[currentIndex + 1];
+        }
+        public void SelectLastFrame()
+        {
+            SelectedFrame = AnimationFrames.Last();
+        }
+        public void PlayAnimation() => IsPlaying = !IsPlaying;
+        
+
+        private void PlaybackTimer_Tick(object sender, EventArgs e)
+        {
+            SelectNextFrame();
+            PlaybackTimer.Interval = new TimeSpan(0, 0, 0, 0, SelectedFrame.DelayTime);
+        }
     }
 }

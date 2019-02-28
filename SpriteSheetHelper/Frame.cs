@@ -14,15 +14,30 @@ namespace SpriteSheetHelper
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] String propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        Vector _topLeft;
-        Vector _bottomRight;
-        Vector _origin;
-
-        public Frame()
+        private Point _position;
+        public Point Position
         {
-            _topLeft = new Vector(1.0, 1.0);
-            _bottomRight = new Vector(2.0, 2.0);
-            _topLeft = new Vector(0.5, 0.5);
+            get => _position;
+            set { _position = value; OnPropertyChanged(); }
+        }
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(); }
+        }
+        // In milliseconds
+        private int _delayTime;
+        public int DelayTime
+        {
+            get => _delayTime;
+            set { _delayTime = value; OnPropertyChanged(); }
+        }
+
+        public Frame(Point position)
+        {
+            Position = position;
+            DelayTime = 100;
         }
     }
 }

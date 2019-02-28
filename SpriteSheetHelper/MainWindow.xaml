@@ -10,10 +10,28 @@
         PreviewMouseMove="Window_PreviewMouseMove" PreviewMouseDown="Window_PreviewMouseDown" PreviewMouseUp="Window_PreviewMouseUp"
         PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
     <Window.CommandBindings>
-        <CommandBinding Command="local:Commands.OpenFile" Executed="OpenFile"/>
-        <CommandBinding Command="local:Commands.CloseFile" Executed="CloseFile" CanExecute="CanCloseFile"/>
-        <CommandBinding Command="local:Commands.Exit" Executed="Exit"/>
+        <CommandBinding Command="{StaticResource OpenFile}" Executed="OpenFile_Executed"/>
+        <CommandBinding Command="{StaticResource CloseFile}" Executed="CloseFile_Executed" CanExecute="CloseFile_CanExecute"/>
+        <CommandBinding Command="{x:Static ApplicationCommands.Close}" Executed="Exit_Exexcuted"/>
+
+        <CommandBinding Command="{StaticResource AddAnimation}" Executed="AddAnimation_Executed"  CanExecute="AddAnimation_CanExecute"/>
+        <CommandBinding Command="{StaticResource RemoveAnimation}" Executed="RemoveAnimation_Executed" CanExecute="RemoveAnimation_CanExecute"/>
+        <CommandBinding Command="{StaticResource EditAnimation}" Executed="EditAnimation_Executed" CanExecute="CloseFile_CanExecute"/>
+
+        <CommandBinding Command="{StaticResource AddFrame}" Executed="CloseFile_Executed" CanExecute="CloseFile_CanExecute"/>
+        <CommandBinding Command="{StaticResource RemoveFrame}" Executed="CloseFile_Executed" CanExecute="CloseFile_CanExecute"/>
+
+        <CommandBinding Command="{StaticResource SelectFirstFrame}" Executed="SelectFirstFrame_Executed" CanExecute="SelectFirstFrame_CanExecute"/>
+        <CommandBinding Command="{StaticResource SelectPreviousFrame}" Executed="SelectPreviousFrame_Executed" CanExecute="SelectPreviousFrame_CanExecute"/>
+        <CommandBinding Command="{StaticResource SelectNextFrame}" Executed="SelectNextFrame_Executed" CanExecute="SelectNextFrame_CanExecute"/>
+        <CommandBinding Command="{StaticResource SelectLastFrame}" Executed="SelectLastFrame_Executed" CanExecute="SelectLastFrame_CanExecute"/>
+        <CommandBinding Command="{StaticResource PlayAnimation}" Executed="PlayAnimation_Executed" CanExecute="PlayAnimation_CanExecute"/>
     </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Ctrl" Key="O" Command="{StaticResource OpenFile}"/>
+        <KeyBinding Modifiers="Ctrl" Key="W" Command="{StaticResource CloseFile}"/>
+        <KeyBinding Modifiers="Alt" Key="F4" Command="{x:Static ApplicationCommands.Close}"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -21,19 +39,19 @@
         </Grid.RowDefinitions>
         <Menu Grid.Row="0">
             <MenuItem Header="File" Style="{StaticResource MenuItemStyle}">
-                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.OpenFile"/>
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="{StaticResource OpenFile}"/>
                 <MenuItem Header="Import Image" Style="{StaticResource SubMenuItemStyle}"/>
                 <Separator />
-                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.CloseFile"/>
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="{StaticResource CloseFile}"/>
                 <MenuItem Header="Save" Style="{StaticResource SubMenuItemStyle}"/>
                 <MenuItem Header="Save As" Style="{StaticResource SubMenuItemStyle}"/>
                 <Separator />
-                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="local:Commands.Exit"/>
+                <MenuItem Style="{StaticResource SubMenuItemStyle}" Command="{x:Static ApplicationCommands.Close}"/>
             </MenuItem>
             <MenuItem Header="Edit" Style="{StaticResource MenuItemStyle}">
                 <MenuItem Header="Copy" Style="{StaticResource SubMenuItemStyle}"/>
                 <MenuItem Header="Cut" Style="{StaticResource SubMenuItemStyle}"/>
-                <MenuItem Header="Close" Style="{StaticResource SubMenuItemStyle}"/>
+                <MenuItem Header="Close" Style="{StaticResource SubMenuItemStyle}" InputGestureText="{Binding Source={StaticResource CloseFile}, Path=Gesture}"/>
             </MenuItem>
         </Menu>
         <Grid Grid.Row="1" Margin="5">
@@ -47,8 +65,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" Width="200" Margin="5">
-                    <StackPanel>
+                <Grid Grid.Column="0" Width="200" Margin="5" Background="{StaticResource MenuItemBackgroundColor}">
+                    <StackPanel Margin="5">
                         <Label>
                             <TextBlock Text="{Binding ScaledMousePositionOnImage.X, StringFormat=Scaled Mouse Image X: {0:N0}}"/>
                         </Label>
@@ -119,15 +137,50 @@
                             <TextBlock Text="{Binding ActiveModifier, StringFormat=Active Modifier: {0}}"/>
                         </Label>
                         <Separator/>
-                        <Label>                            
+                        <Label HorizontalContentAlignment="Stretch">
                             <TextBox Text="{Binding FrameWidth, StringFormat=0;N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </Label>
-                        <Label>
+                        <Label HorizontalContentAlignment="Stretch">
                             <TextBox Text="{Binding FrameHeight, StringFormat=0;N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Label>
+                        <Separator/>
+                        <Label>
+                            <TextBlock Text="{Binding SelectedTool}"/>
                         </Label>
                     </StackPanel>
                 </Grid>
-                <ScrollViewer x:Name="ScrollViewer" Grid.Column="1" Focusable="False" Margin="5"
+                <Grid Grid.Column="1" Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border VerticalAlignment="Top" Background="{StaticResource MenuItemBackgroundColor}" Padding="0" Margin="0">
+                        <ListBox ItemsSource="{Binding Tools}" SelectedItem="{Binding SelectedTool}" Padding="0" Margin="0">
+                            <ListBox.Template>
+                                <ControlTemplate>
+                                    <WrapPanel Orientation="Vertical" IsItemsHost="True" Margin="5" ItemWidth="24" ItemHeight="24"/>
+                                </ControlTemplate>
+                            </ListBox.Template>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListBoxItem}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                <ToggleButton IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected, Mode=TwoWay}" Focusable="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                                    <Rectangle Fill="{StaticResource MainBackgroundColor}">
+                                                        <Rectangle.OpacityMask>
+                                                            <ImageBrush ImageSource="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=DataContext, Converter={StaticResource IconConverter}}"/>
+                                                        </Rectangle.OpacityMask>
+                                                    </Rectangle>
+                                                </ToggleButton>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Border>
+                    <ScrollViewer x:Name="ScrollViewer" Focusable="False" Grid.Column="1"
                           HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"                           
                           PreviewMouseWheel="ScrollViewer_PreviewMouseWheel" ScrollChanged="ScrollViewer_ScrollChanged"
                           local:ScrollViewerObserver.ObserveScrollViewer="True" 
@@ -135,99 +188,163 @@
                           local:ScrollViewerObserver.ScrollableSize="{Binding ScrollableSize, Mode=OneWayToSource}"
                           local:ScrollViewerObserver.HorizontalOffset="{Binding HorizontalOffset, Mode=TwoWay}" 
                           local:ScrollViewerObserver.VerticalOffset="{Binding VerticalOffset, Mode=TwoWay}">
-                    <Canvas x:Name="Canvas" Background="{StaticResource WorkspaceBackgroundColor}"
+                        <Canvas x:Name="Canvas" Background="{StaticResource WorkspaceBackgroundColor}"
                             MinWidth="{Binding ViewportWidth}" MinHeight="{Binding ViewportHeight}"
                             Width="{Binding CanvasSize.Width}" Height="{Binding CanvasSize.Height}">
-                        <Rectangle Fill="White" Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
+                            <Rectangle Fill="White" Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
                                    Canvas.Left="{Binding ImagePosition.X}" Canvas.Top="{Binding ImagePosition.Y}"/>
-                        <Image x:Name="Image" Source="{Binding ImageSource}" RenderOptions.BitmapScalingMode="NearestNeighbor"
+                            <Image x:Name="Image" Source="{Binding ImageSource}" RenderOptions.BitmapScalingMode="NearestNeighbor"
                                Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
-                               Canvas.Left="{Binding ImagePosition.X}" Canvas.Top="{Binding ImagePosition.Y}" MouseDown="Image_MouseDown"/>
-                        <ItemsControl ItemsSource="{Binding Frames}"
-                                      Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}"
-                                      Canvas.Left="{Binding Path=ImagePosition.X}" Canvas.Top="{Binding Path=ImagePosition.Y}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas >
-                                        <Canvas.LayoutTransform>
-                                            <ScaleTransform ScaleX="{Binding ScaleValue}" ScaleY="{Binding ScaleValue}"/>
-                                        </Canvas.LayoutTransform>
-                                    </Canvas>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="ContentPresenter">
-                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Rectangle Width="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Width}" Height="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Height}" Fill="LightBlue" Stroke="DarkBlue" Opacity="0.5" IsHitTestVisible="False" StrokeDashOffset="5" StrokeDashArray="5" StrokeDashCap="Triangle">
-                                        <Rectangle.RenderTransform>
-                                            <TranslateTransform X="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameCenter.X}" Y="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameCenter.Y}" />
-                                        </Rectangle.RenderTransform>
-                                    </Rectangle>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Canvas>
-                </ScrollViewer>
+                               Canvas.Left="{Binding ImagePosition.X}" Canvas.Top="{Binding ImagePosition.Y}"/>
+                            <ListBox x:Name="FramesSuperset" ItemsSource="{Binding FramesSuperset}" SelectedItem="{Binding SelectedFrame, Mode=TwoWay}" Background="Transparent"
+                                     SelectionMode="Extended" Width="{Binding ImageSize.Width}" Height="{Binding ImageSize.Height}" 
+                                     Canvas.Left="{Binding Path=ImagePosition.X}" Canvas.Top="{Binding Path=ImagePosition.Y}"
+                                     MouseDown="Image_MouseDown" SelectionChanged="FramesSuperset_SelectionChanged">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas>
+                                            <Canvas.LayoutTransform>
+                                                <ScaleTransform ScaleX="{Binding ScaleValue}" ScaleY="{Binding ScaleValue}"/>
+                                            </Canvas.LayoutTransform>
+                                        </Canvas>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected}"/>
+                                        <Setter Property="Canvas.Left">
+                                            <Setter.Value>
+                                                <MultiBinding Converter="{StaticResource DifferenceConverter}">
+                                                    <Binding Path="Position.X"/>
+                                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}" Path="DataContext.FrameCenter.X"/>
+                                                </MultiBinding>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Canvas.Top" >
+                                            <Setter.Value>
+                                                <MultiBinding Converter="{StaticResource DifferenceConverter}">
+                                                    <Binding Path="Position.Y"/>
+                                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}" Path="DataContext.FrameCenter.Y"/>
+                                                </MultiBinding>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                    <Grid Background="Transparent">
+                                                        <ToggleButton Width="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Width}" Height="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.FrameSize.Height}" Opacity="0.5" IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" IsHitTestVisible="False"/>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Canvas>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
-            <GridSplitter Grid.Column="1" Background="Black" Foreground="Black"/>
+            <GridSplitter Grid.Column="1" Background="{StaticResource MainForegroundColor}" Foreground="{StaticResource MainForegroundColor}" HorizontalAlignment="Stretch"/>
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="1*"/>
                     <RowDefinition Height="2*"/>
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="5,5,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0" Content="Animations"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="~" Width="20" Height="20"/>
-                        <Button Content="-" Width="20" Height="20"/>
-                        <Button Content="+" Width="20" Height="20"/>
-                    </StackPanel>
-                </Grid>
-                <ListBox Grid.Row="1" Margin="5" ItemsSource="{Binding Animations}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedAnimation}"/>
-                <Grid Grid.Row="2" Margin="5,5,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0" Content="Frames"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="-" Width="20" Height="20"/>
-                        <Button Content="+" Width="20" Height="20"/>
-                    </StackPanel>
-                </Grid>
-                <ListBox Grid.Row="3" Margin="5" ItemsSource="{Binding SelectedAnimation.Frames}">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Border Grid.Row="0" Width="50" Height="50" CornerRadius="5" Background="Black">
-                                    <Grid/>
-                                </Border>
-                                <TextBlock Grid.Row="1" Text="hello" HorizontalAlignment="Center"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                <DockPanel Grid.Row="0" Margin="5">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Animations"/>
+                        <WrapPanel Grid.Column="1" Orientation="Horizontal" ItemWidth="20" ItemHeight="20" FlowDirection="RightToLeft">
+                            <Button Content="+" Focusable="False" Command="{StaticResource AddAnimation}"/>
+                            <Button Content="-" Focusable="False" Command="{StaticResource RemoveAnimation}"/>
+                            <Button Content="~" Focusable="False" Command="{StaticResource EditAnimation}"/>
+                        </WrapPanel>
+                    </Grid>
+                    <ListBox DockPanel.Dock="Bottom" x:Name="Animations" ItemsSource="{Binding Animations}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedAnimation}" SelectionMode="Extended" SelectionChanged="Animations_SelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </DockPanel>
+                <DockPanel Grid.Row="1" Margin="5">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Frames"/>
+                        <WrapPanel Grid.Column="1" Orientation="Horizontal" FlowDirection="RightToLeft" ItemWidth="20" ItemHeight="20">
+                            <Button Content="+" Command="{StaticResource AddFrame}"/>
+                            <Button Content="-" Command="{StaticResource RemoveFrame}"/>
+                        </WrapPanel>
+                    </Grid>
+                    <ListBox x:Name="AnimationFrames" ItemsSource="{Binding AnimationFrames}" SelectionMode="Extended">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                                <Setter Property="ContentTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Image Grid.Row="0" Width="50" Height="50">
+                                                    <Image.Source>
+                                                        <MultiBinding Converter="{StaticResource ThumbnailConverter}">
+                                                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type ListBox}}" Path="DataContext.ImageSource"/>
+                                                            <Binding Path="Position"/>
+                                                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type ListBox}}" Path="DataContext.FrameSize"/>
+                                                        </MultiBinding>
+                                                    </Image.Source>
+                                                </Image>
+                                                <TextBlock Grid.Row="1" Text="{Binding Position.X}" HorizontalAlignment="Left"/>
+                                                <TextBlock Grid.Row="1" Text="{Binding Position.Y}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </DockPanel>
+                <GroupBox Grid.Row="2" Header="Playback" BorderBrush="{StaticResource MainForegroundColor}" Foreground="{StaticResource MainForegroundColor}" Margin="5" IsEnabled="{Binding SelectedAnimation, Converter={StaticResource IsEnabledConverted}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Rectangle Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center" Width="{Binding ElementName=CurrentFrame, Path=ActualWidth}" Height="{Binding ElementName=CurrentFrame, Path=ActualHeight}"/>
+                        <Image x:Name="CurrentFrame" Grid.Row="0" RenderOptions.BitmapScalingMode="NearestNeighbor" Margin="5">
+                            <Image.Source>
+                                <MultiBinding Converter="{StaticResource ThumbnailConverter}">
+                                    <Binding Path="ImageSource"/>
+                                    <Binding Path="CurrentFrame.Position"/>
+                                    <Binding Path="FrameSize"/>
+                                </MultiBinding>
+                            </Image.Source>
+                        </Image>
+                        <WrapPanel Grid.Row="1" Orientation="Horizontal" ItemWidth="24" ItemHeight="24" Margin="5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Button Content="|&lt;" Command="{StaticResource SelectFirstFrame}"/>
+                            <Button Content="&lt;&lt;" Command="{StaticResource SelectPreviousFrame}"/>
+                            <ToggleButton Content="&gt;" Command="{StaticResource PlayAnimation}" IsChecked="{Binding IsPlaying, Mode=OneWay}"/>
+                            <Button Content="&gt;&gt;" Command="{StaticResource SelectNextFrame}"/>
+                            <Button Content="&gt;|" Command="{StaticResource SelectLastFrame}"/>
+                        </WrapPanel>
+                    </Grid>
+                </GroupBox>
             </Grid>
         </Grid>
     </Grid>
